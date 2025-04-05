@@ -15,21 +15,29 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+
+// API Routes
 app.use("/api/chat", chatRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/job", jobRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/application", applicationRoutes);
 
-//  MongoDB connection
+// Health Check Route
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "OK", timestamp: Date.now() });
+});
+
+// MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log(" MongoDB Connected"))
-  .catch((err) => console.error(" MongoDB Error:", err));
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.error(" MongoDB Connection Error:", err));
 
-//  Socket.io Setup
+// Socket.io Setup
 const io = new Server(server, {
   cors: {
     origin: ['https://client-miq4j6agv-nama-srilathas-projects.vercel.app'],
@@ -37,18 +45,19 @@ const io = new Server(server, {
   },
 });
 
-//  Store online users
+// Store online users
 const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
-  console.log(` User connected: ${socket.id}`);
+  console.log(` Socket connected: ${socket.id}`);
 
-  //  Register user
+  // Register user
   socket.on("registerUser", (userId) => {
     onlineUsers.set(userId, socket.id);
+    console.log(` User registered: ${userId} (socket: ${socket.id})`);
   });
 
-  //  Send message event
+  // Send message
   socket.on("sendMessage", async ({ senderId, receiverId, message }) => {
     try {
       if (!senderId || !receiverId || !message.trim()) return;
@@ -60,24 +69,38 @@ io.on("connection", (socket) => {
       if (receiverSocketId) {
         socket.to(receiverSocketId).emit("receiveMessage", newMessage);
       }
-      socket.emit("receiveMessage", newMessage);
+
+      // Emit back to sender only if receiver is different
+      if (socket.id !== receiverSocketId) {
+        socket.emit("receiveMessage", newMessage);
+      }
 
     } catch (error) {
       console.error(" Error sending message:", error);
     }
   });
 
-  //  Handle disconnect
+  // Disconnect
   socket.on("disconnect", () => {
-    console.log(` User disconnected: ${socket.id}`);
+    console.log(`Socket disconnected: ${socket.id}`);
     for (let [userId, socketId] of onlineUsers) {
       if (socketId === socket.id) {
         onlineUsers.delete(userId);
+        console.log(`⚠️ User disconnected: ${userId}`);
         break;
       }
     }
   });
 });
 
+// Graceful Shutdown
+process.on("SIGINT", () => {
+  server.close(() => {
+    console.log("🔌 Server closed");
+    process.exit(0);
+  });
+});
+
+// Start Server
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(` Server running on port ${PORT}`));
