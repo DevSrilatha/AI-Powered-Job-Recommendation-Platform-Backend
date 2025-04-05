@@ -32,7 +32,7 @@ mongoose
 //  Socket.io Setup
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:3000'],
+    origin: ['https://client-miq4j6agv-nama-srilathas-projects.vercel.app'],
     methods: ['GET', 'POST'],
   },
 });
