@@ -14,9 +14,12 @@ const applicationRoutes = require("./routes/applicationRoutes");
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
-
+// 'https://client-miq4j6agv-nama-srilathas-projects.vercel.app'
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}));
 app.use(express.json());
 
 // API Routes
@@ -40,8 +43,9 @@ mongoose
 // Socket.io Setup
 const io = new Server(server, {
   cors: {
-    origin: ['https://client-miq4j6agv-nama-srilathas-projects.vercel.app'],
+    origin: ["http://localhost:3000",],
     methods: ['GET', 'POST'],
+    credentials: true
   },
 });
 
