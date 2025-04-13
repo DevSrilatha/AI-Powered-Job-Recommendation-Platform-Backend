@@ -16,7 +16,7 @@ const app = express();
 const server = http.createServer(app);
 // 'https://client-miq4j6agv-nama-srilathas-projects.vercel.app'
 // Middleware
-const allowedOrigins = ['https://ai-powered-job-recommendation-platform-frontened-z8p-qpse60460.vercel.app/'];
+const allowedOrigins = ['https://ai-powered-job-recommendation-platform-frontened.vercel.app/'];
 
 app.use(cors({
   origin: allowedOrigins,
@@ -46,7 +46,7 @@ mongoose
 // Socket.io Setup
 const io = new Server(server, {
   cors: {
-    origin: ["https://ai-powered-job-recommendation-platform-frontened-z8p-qpse60460.vercel.app/"],
+    origin: ["https://ai-powered-job-recommendation-platform-frontened.vercel.app/"],
     methods: ['GET', 'POST'],
     credentials: true
   },
